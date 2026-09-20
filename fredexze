@@ -1,25 +1,380 @@
--- Fredexze
--- Ride a Pet script project
+-- ╔══════════════════════════════════════╗
+-- ║       FREDEXZE PANEL v1.0             ║
+-- ║  Minimize/Maximize + All Features     ║
+-- ╚══════════════════════════════════════╝
 
-local ScriptName = "Fredexze"
-local Version = "1.0.0"
+-- Services
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+local Player = Players.LocalPlayer
+local Character, Humanoid, HumanoidRootPart
 
-print(ScriptName .. " v" .. Version .. " loaded")
+-- Settings
+local PanelEnabled = true
+local PanelMinimized = false
+local AutoBlackhole = false
+local AutoGalaxy = false
+local AutoCherub = false
+local AntiAFKEnabled = false
+local SpeedEnabled = false
+local SpeedValue = 16 -- Default speed
 
-local Settings = {
-    Speed = 16,
-    AutoFarm = false,
-    AutoEgg = false,
-    AntiAFK = false
-}
+-- Auto update character
+local function UpdateCharacter()
+	Character = Player.Character or Player.CharacterAdded:Wait()
+	Humanoid = Character:WaitForChild("Humanoid")
+	HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+end
+UpdateCharacter()
+Player.CharacterAdded:Connect(UpdateCharacter)
 
-local function SetSetting(name, value)
-    if Settings[name] ~= nil then
-        Settings[name] = value
-        print(name .. " = " .. tostring(value))
-    end
+-- ═══════════════════ UI CREATION ═══════════════════
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FredexzePanel"
+ScreenGui.Parent = PlayerGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Main Panel
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 280, 0, 340)
+MainFrame.Position = UDim2.new(0.02, 0, 0.5, -170)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+MainFrame.BorderSizePixel = 0
+MainFrame.CornerRadius = UDim.new(0, 10)
+MainFrame.Parent = ScreenGui
+
+-- Shadow
+local Shadow = Instance.new("UICorner")
+Shadow.CornerRadius = UDim.new(0, 10)
+Shadow.Parent = MainFrame
+
+local Stroke = Instance.new("UIStroke")
+Stroke.Color = Color3.fromRGB(80, 80, 180)
+Stroke.Thickness = 2
+Stroke.Parent = MainFrame
+
+-- Title Bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
+TitleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+TitleBar.CornerRadius = UDim.new(0, 10)
+TitleBar.Parent = MainFrame
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 10)
+TitleCorner.Parent = TitleBar
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Name = "TitleLabel"
+TitleLabel.Size = UDim2.new(1, -70, 1, 0)
+TitleLabel.Position = UDim2.new(0, 10, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "🔥 FREDEXZE"
+TitleLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextSize = 16
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = TitleBar
+
+-- Minimize Button
+local MinBtn = Instance.new("TextButton")
+MinBtn.Name = "MinBtn"
+MinBtn.Size = UDim2.new(0, 30, 0, 25)
+MinBtn.Position = UDim2.new(1, -60, 0, 5)
+MinBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 220)
+MinBtn.Text = "−"
+MinBtn.TextColor3 = Color3.new(1,1,1)
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextSize = 18
+MinBtn.CornerRadius = UDim.new(0, 6)
+MinBtn.Parent = TitleBar
+
+local MinCorner = Instance.new("UICorner")
+MinCorner.CornerRadius = UDim.new(0, 6)
+MinCorner.Parent = MinBtn
+
+-- Close Button
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Name = "CloseBtn"
+CloseBtn.Size = UDim2.new(0, 30, 0, 25)
+CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+CloseBtn.Text = "×"
+CloseBtn.TextColor3 = Color3.new(1,1,1)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 18
+CloseBtn.CornerRadius = UDim.new(0, 6)
+CloseBtn.Parent = TitleBar
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.Parent = CloseBtn
+
+-- Content Frame
+local ContentFrame = Instance.new("ScrollingFrame")
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Size = UDim2.new(1, -10, 1, -45)
+ContentFrame.Position = UDim2.new(0, 5, 0, 40)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.ScrollBarThickness = 4
+ContentFrame.ScrollBarColor3 = Color3.fromRGB(100, 100, 180)
+ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 290)
+ContentFrame.Parent = MainFrame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Padding = UDim.new(0, 8)
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+UIListLayout.Parent = ContentFrame
+
+-- ═══════════════════ TOGGLE BUTTON FUNCTION ═══════════════════
+local function CreateToggle(name, callback)
+	local Container = Instance.new("Frame")
+	Container.Size = UDim2.new(1, -10, 0, 40)
+	Container.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
+	Container.CornerRadius = UDim.new(0, 8)
+	Container.Parent = ContentFrame
+
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0, 8)
+	Corner.Parent = Container
+
+	local Label = Instance.new("TextLabel")
+	Label.Size = UDim2.new(0.7, 0, 1, 0)
+	Label.Position = UDim2.new(0, 12, 0, 0)
+	Label.BackgroundTransparency = 1
+	Label.Text = name
+	Label.TextColor3 = Color3.fromRGB(230, 230, 255)
+	Label.Font = Enum.Font.Gotham
+	Label.TextSize = 14
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+	Label.Parent = Container
+
+	local ToggleBtn = Instance.new("TextButton")
+	ToggleBtn.Size = UDim2.new(0, 45, 0, 26)
+	ToggleBtn.Position = UDim2.new(1, -55, 0.5, -13)
+	ToggleBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 120)
+	ToggleBtn.Text = "OFF"
+	ToggleBtn.TextColor3 = Color3.new(1,1,1)
+	ToggleBtn.Font = Enum.Font.GothamBold
+	ToggleBtn.TextSize = 11
+	ToggleBtn.CornerRadius = UDim.new(0, 6)
+	ToggleBtn.Parent = Container
+
+	local TogCorner = Instance.new("UICorner")
+	TogCorner.CornerRadius = UDim.new(0, 6)
+	TogCorner.Parent = ToggleBtn
+
+	local isOn = false
+	ToggleBtn.MouseButton1Click:Connect(function()
+		isOn = not isOn
+		ToggleBtn.Text = isOn and "ON" or "OFF"
+		ToggleBtn.BackgroundColor3 = isOn and Color3.fromRGB(60, 180, 100) or Color3.fromRGB(80, 80, 120)
+		callback(isOn)
+	end)
+
+	return ToggleBtn
 end
 
-SetSetting("Speed", 16)
+-- ═══════════════════ SPEED CHANGER ═══════════════════
+local SpeedContainer = Instance.new("Frame")
+SpeedContainer.Size = UDim2.new(1, -10, 0, 50)
+SpeedContainer.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
+SpeedContainer.CornerRadius = UDim.new(0, 8)
+SpeedContainer.Parent = ContentFrame
 
-print("Ready!")
+local SpeedCorner = Instance.new("UICorner")
+SpeedCorner.CornerRadius = UDim.new(0, 8)
+SpeedCorner.Parent = SpeedContainer
+
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Size = UDim2.new(0.5, 0, 1, 0)
+SpeedLabel.Position = UDim2.new(0, 12, 0, 0)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "⚡ Speed: " .. SpeedValue
+SpeedLabel.TextColor3 = Color3.fromRGB(230, 230, 255)
+SpeedLabel.Font = Enum.Font.Gotham
+SpeedLabel.TextSize = 14
+SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+SpeedLabel.Parent = SpeedContainer
+
+local SpeedPlus = Instance.new("TextButton")
+SpeedPlus.Size = UDim2.new(0, 30, 0, 26)
+SpeedPlus.Position = UDim2.new(1, -70, 0.5, -13)
+SpeedPlus.BackgroundColor3 = Color3.fromRGB(60, 160, 220)
+SpeedPlus.Text = "+"
+SpeedPlus.TextColor3 = Color3.new(1,1,1)
+SpeedPlus.Font = Enum.Font.GothamBold
+SpeedPlus.TextSize = 14
+SpeedPlus.CornerRadius = UDim.new(0, 6)
+SpeedPlus.Parent = SpeedContainer
+
+local PlusCorner = Instance.new("UICorner")
+PlusCorner.CornerRadius = UDim.new(0, 6)
+PlusCorner.Parent = SpeedPlus
+
+local SpeedMinus = Instance.new("TextButton")
+SpeedMinus.Size = UDim2.new(0, 30, 0, 26)
+SpeedMinus.Position = UDim2.new(1, -35, 0.5, -13)
+SpeedMinus.BackgroundColor3 = Color3.fromRGB(220, 120, 60)
+SpeedMinus.Text = "−"
+SpeedMinus.TextColor3 = Color3.new(1,1,1)
+SpeedMinus.Font = Enum.Font.GothamBold
+SpeedMinus.TextSize = 14
+SpeedMinus.CornerRadius = UDim.new(0, 6)
+SpeedMinus.Parent = SpeedContainer
+
+local MinusCorner = Instance.new("UICorner")
+MinusCorner.CornerRadius = UDim.new(0, 6)
+MinusCorner.Parent = SpeedMinus
+
+-- ═══════════════════ FEATURE LOGIC ═══════════════════
+
+-- Auto Get Blackhole Egg
+CreateToggle("🥚 Auto Blackhole Egg", function(state)
+	AutoBlackhole = state
+end)
+
+-- Auto Get Galaxy Egg
+CreateToggle("🌌 Auto Galaxy Egg", function(state)
+	AutoGalaxy = state
+end)
+
+-- Auto Get Cherub Egg
+CreateToggle("👼 Auto Cherub Egg", function(state)
+	AutoCherub = state
+end)
+
+-- Anti AFK
+CreateToggle("🛡️ Anti AFK", function(state)
+	AntiAFKEnabled = state
+end)
+
+-- Speed Toggle
+local SpeedToggle = CreateToggle("⚡ Speed Changer", function(state)
+	SpeedEnabled = state
+	if not state and Humanoid then
+		Humanoid.WalkSpeed = 16
+	end
+end)
+
+-- Speed Buttons
+SpeedPlus.MouseButton1Click:Connect(function()
+	SpeedValue = math.min(SpeedValue + 2, 100)
+	SpeedLabel.Text = "⚡ Speed: " .. SpeedValue
+	if SpeedEnabled and Humanoid then
+		Humanoid.WalkSpeed = SpeedValue
+	end
+end)
+
+SpeedMinus.MouseButton1Click:Connect(function()
+	SpeedValue = math.max(SpeedValue - 2, 6)
+	SpeedLabel.Text = "⚡ Speed: " .. SpeedValue
+	if SpeedEnabled and Humanoid then
+		Humanoid.WalkSpeed = SpeedValue
+	end
+end)
+
+-- ═══════════════════ MINIMIZE/MAXIMIZE ═══════════════════
+local OriginalHeight = 340
+local MinimizedHeight = 35
+
+MinBtn.MouseButton1Click:Connect(function()
+	PanelMinimized = not PanelMinimized
+	local TargetHeight = PanelMinimized and MinimizedHeight or OriginalHeight
+	ContentFrame.Visible = not PanelMinimized
+	MinBtn.Text = PanelMinimized and "+" or "−"
+	TweenService:Create(MainFrame, TweenInfo.new(0.2), {Size = UDim2.new(0, 280, 0, TargetHeight)}):Play()
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+	ScreenGui:Destroy()
+end)
+
+-- ═══════════════════ DRAG PANEL ═══════════════════
+local Dragging, DragStart, StartPos = false, nil, nil
+
+TitleBar.InputBegan:Connect(function(Input)
+	if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+		Dragging = true
+		DragStart = Input.Position
+		StartPos = MainFrame.Position
+	end
+end)
+
+UIS.InputChanged:Connect(function(Input)
+	if Dragging and Input.UserInputType == Enum.UserInputType.MouseMovement then
+		local Delta = Input.Position - DragStart
+		MainFrame.Position = UDim2.new(StartPos.X.Scale, StartPos.X.Offset + Delta.X, StartPos.Y.Scale, StartPos.Y.Offset + Delta.Y)
+	end
+end)
+
+TitleBar.InputEnded:Connect(function(Input)
+	if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+		Dragging = false
+	end
+end)
+
+-- ═══════════════════ MAIN LOOP ═══════════════════
+task.spawn(function()
+	while task.wait(0.5) do
+		if not PanelEnabled then continue end
+		if not Humanoid then UpdateCharacter() continue end
+
+		-- Anti AFK
+		if AntiAFKEnabled then
+			task.spawn(function()
+				-- Jump every 60 sec to avoid AFK kick
+				local ok, err = pcall(function()
+					Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+				end)
+			end)
+		end
+
+		-- Auto Get Eggs (adjust names to match your game!)
+		local function FindEgg(name)
+			for _, v in ipairs(workspace:GetDescendants()) do
+				if v:IsA("BasePart") and v.Name:lower():find(name:lower()) then
+					return v
+				end
+			end
+			return nil
+		end
+
+		if AutoBlackhole then
+			local egg = FindEgg("blackhole")
+			if egg and HumanoidRootPart then
+				HumanoidRootPart.CFrame = egg.CFrame * CFrame.new(0, 3, 0)
+				task.wait(0.1)
+			end
+		end
+
+		if AutoGalaxy then
+			local egg = FindEgg("galaxy")
+			if egg and HumanoidRootPart then
+				HumanoidRootPart.CFrame = egg.CFrame * CFrame.new(0, 3, 0)
+				task.wait(0.1)
+			end
+		end
+
+		if AutoCherub then
+			local egg = FindEgg("cherub")
+			if egg and HumanoidRootPart then
+				HumanoidRootPart.CFrame = egg.CFrame * CFrame.new(0, 3, 0)
+				task.wait(0.1)
+			end
+		end
+
+		-- Apply Speed
+		if SpeedEnabled and Humanoid then
+			Humanoid.WalkSpeed = SpeedValue
+		end
+	end
+end)
+
+print("✅ FREDEXZE PANEL LOADED!")
