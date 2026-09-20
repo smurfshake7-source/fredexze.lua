@@ -1,0 +1,154 @@
+-- Fredexze - Roblox Studio version
+-- Put this LocalScript inside StarterPlayer > StarterPlayerScripts
+
+local Players = game:GetService("Players")
+local VirtualUser = game:GetService("VirtualUser")
+
+local player = Players.LocalPlayer
+local gui = Instance.new("ScreenGui")
+gui.Name = "Fredexze"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- Main window
+local frame = Instance.new("Frame")
+frame.Size = UDim2.fromOffset(250, 300)
+frame.Position = UDim2.new(0.5, -125, 0.5, -150)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+frame.Parent = gui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = frame
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -45, 0, 40)
+title.BackgroundTransparency = 1
+title.Text = "Fredexze"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.TextSize = 20
+title.Font = Enum.Font.GothamBold
+title.Parent = frame
+
+-- Minimize button
+local minimize = Instance.new("TextButton")
+minimize.Size = UDim2.fromOffset(40, 35)
+minimize.Position = UDim2.new(1, -42, 0, 3)
+minimize.Text = "—"
+minimize.TextSize = 20
+minimize.TextColor3 = Color3.new(1, 1, 1)
+minimize.BackgroundTransparency = 1
+minimize.Parent = frame
+
+local content = Instance.new("Frame")
+content.Size = UDim2.new(1, -20, 1, -50)
+content.Position = UDim2.fromOffset(10, 45)
+content.BackgroundTransparency = 1
+content.Parent = frame
+
+local layout = Instance.new("UIListLayout")
+layout.Padding = UDim.new(0, 7)
+layout.Parent = content
+
+local function makeButton(text)
+	local button = Instance.new("TextButton")
+	button.Size = UDim2.new(1, 0, 0, 38)
+	button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+	button.TextColor3 = Color3.new(1, 1, 1)
+	button.Text = text
+	button.TextSize = 14
+	button.Font = Enum.Font.Gotham
+	button.Parent = content
+
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 7)
+	c.Parent = button
+
+	return button
+end
+
+-- Speed
+local speedButton = makeButton("Speed: 16")
+
+local speed = 16
+
+speedButton.MouseButton1Click:Connect(function()
+	speed += 4
+
+	if speed > 60 then
+		speed = 16
+	end
+
+	speedButton.Text = "Speed: " .. speed
+
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
+	if humanoid then
+		humanoid.WalkSpeed = speed
+	end
+end)
+
+-- Anti-AFK
+local antiAFK = false
+local afkButton = makeButton("Anti-AFK: OFF")
+
+afkButton.MouseButton1Click:Connect(function()
+	antiAFK = not antiAFK
+	afkButton.Text = "Anti-AFK: " .. (antiAFK and "ON" or "OFF")
+end)
+
+player.Idled:Connect(function()
+	if antiAFK then
+		VirtualUser:CaptureController()
+		VirtualUser:ClickButton2(Vector2.new())
+	end
+end)
+
+-- TP to Pen
+local penButton = makeButton("TP to Pen")
+
+penButton.MouseButton1Click:Connect(function()
+	local character = player.Character
+	local pen = workspace:FindFirstChild("Pen", true)
+
+	if character and pen and pen:IsA("BasePart") then
+		character:PivotTo(pen.CFrame + Vector3.new(0, 3, 0))
+	end
+end)
+
+-- Egg feature hooks
+local blackholeButton = makeButton("Auto Get Blackhole Egg")
+local cherubButton = makeButton("Auto Get Cherub Egg")
+local galaxyButton = makeButton("Auto Get Galaxy Egg")
+
+blackholeButton.MouseButton1Click:Connect(function()
+	print("Blackhole Egg: connect this to your game's server-side egg system.")
+end)
+
+cherubButton.MouseButton1Click:Connect(function()
+	print("Cherub Egg: connect this to your game's server-side egg system.")
+end)
+
+galaxyButton.MouseButton1Click:Connect(function()
+	print("Galaxy Egg: connect this to your game's server-side egg system.")
+end)
+
+-- Minimize / maximize
+local minimized = false
+
+minimize.MouseButton1Click:Connect(function()
+	minimized = not minimized
+
+	content.Visible = not minimized
+
+	if minimized then
+		frame.Size = UDim2.fromOffset(250, 45)
+		minimize.Text = "+"
+	else
+		frame.Size = UDim2.fromOffset(250, 300)
+		minimize.Text = "—"
+	end
+end)
